@@ -5,8 +5,13 @@ with Ada.Text_IO;
 
 with Interfaces.C; use Interfaces.C;
 
+
 with Allegro5.Color;
 with Allegro5.Drawing;
+with Allegro5.Events;
+with Allegro5.Keyboard;
+with Allegro5.System;
+
 with Allegro5.Allegro.Primitives;
 
 use  Allegro5; use Allegro5.Allegro;
@@ -37,11 +42,74 @@ package body Stardust_Engine is
       Object_List.Iterate (Each'Access);
    end Move;
 
+   overriding
    procedure Move (Obj : in out Object_2; dT : Duration) is
    begin
       Obj.Pos.X := Obj.Pos.X + Obj.Vel.Vx * Float (dT);
       Obj.Pos.Y := Obj.Pos.Y + Obj.Vel.Vy * Float (dT);
    end Move;
+
+   function Initialize (Width : Integer;
+                        Height : Integer) return Boolean is
+      Success : Boolean := True;
+   begin
+      Ada.Text_IO.Put ("System ... ");
+      if System.al_init = 0 then
+         Ada.Text_IO.Put_Line ("FAIL");
+         goto deinit_system;
+      else
+         Ada.Text_IO.Put_Line ("OK");
+      end if;
+
+      Ada.Text_IO.Put ("Keyboard ... ");
+      if Keyboard.al_install_keyboard = 0 then
+         Ada.Text_IO.Put_Line ("FAIL");
+         Success := False;
+      else
+         Ada.Text_IO.Put_Line ("OK");
+      end if;
+
+      Ada.Text_IO.Put ("Primitives ... ");
+      if Allegro.Primitives.al_init_primitives_addon = 0 then
+         Ada.Text_IO.Put_Line ("FAIL");
+         Success := False;
+      else
+         Ada.Text_IO.Put_Line ("OK");
+      end if;
+
+      Event_Queue := Events.al_create_event_queue;
+
+      Screen_Width := int (Width);
+      Screen_Height := int (Height);
+
+      Disp := Display.al_create_display (w => Screen_Width,
+                                         h => Screen_Height);
+
+      Move_Timer := Timer.al_create_timer (1.0 / 60.0); -- 60 fps
+
+      Events.al_register_event_source (Event_Queue, Keyboard.al_get_keyboard_event_source);
+      Events.al_register_event_source (Event_Queue, Timer.al_get_timer_event_source (Move_Timer));
+      Events.al_register_event_source (Event_Queue, Display.al_get_display_event_source (Disp));
+
+      return Success;
+
+      <<deinit_system>>
+      System.al_uninstall_system;
+      return False;
+   end Initialize;
+
+   procedure Cleanup is
+   begin
+      Display.al_destroy_display (Disp);
+      Timer.al_destroy_timer (Move_Timer);
+      Events.al_destroy_event_queue (Event_Queue);
+      System.al_uninstall_system;
+   end Cleanup;
+
+
+
+
+
 
    function Absolute_Velocity (Obj : Object_X) return Float is
    begin
@@ -327,6 +395,16 @@ package body Stardust_Engine is
          end loop;
       end;
    end Render_Projectiles;
+
+   function Get_Screen_Width return int is
+   begin
+      return Screen_Width;
+   end Get_Screen_Width;
+
+   function Get_Screen_Height return int is
+   begin
+      return Screen_Height;
+   end Get_Screen_Height;
 
 begin
    Players (One).X        := 100.0;

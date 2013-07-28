@@ -5,12 +5,12 @@ with Ada.Containers.Indefinite_Doubly_Linked_Lists;
 with Interfaces.C; use Interfaces.C;
 
 with Allegro5.Color;
+with Allegro5.Display;
+with Allegro5.Events;
+with Allegro5.Timer;
 use Allegro5;
 
 package Stardust_Engine is
-
-   Screen_Width : int;
-   Screen_Height : int;
 
    -- Abstract
    type Object is interface;
@@ -51,8 +51,12 @@ package Stardust_Engine is
    procedure Move (Obj : in out Object_2; dT : Duration);
 
 
+   -- Helper subprograms
 
+   function Initialize (Width : Integer;
+                        Height : Integer) return Boolean;
 
+   procedure Cleanup;
 
 
 
@@ -118,7 +122,17 @@ package Stardust_Engine is
 
    procedure Render_Projectiles;
 
+   function Get_Screen_Width return int;
+   function Get_Screen_Height return int;
+
 private
+
+   Screen_Width : int;
+   Screen_Height : int;
+
+   Disp : Display.ALLEGRO_DISPLAY;
+   Event_Queue : Events.ALLEGRO_EVENT_QUEUE;
+   Move_Timer : Timer.ALLEGRO_TIMER;
 
    Float_RNG : Float_Random.Generator;
 
