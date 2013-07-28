@@ -13,13 +13,43 @@ use  Allegro5; use Allegro5.Allegro;
 
 package body Stardust_Engine is
 
-   function Absolute_Velocity (Obj : Object) return Float is
+   procedure Draw is
+      procedure Each (Cur : Object_Lists.Cursor) is
+         Obj : Object'Class := Object_Lists.Element (Cur);
+      begin
+         if Obj in Drawable'Class then
+            Drawable'Class (Obj).Draw;
+         end if;
+      end Each;
+   begin
+      Object_List.Iterate (Each'Access);
+   end Draw;
+
+   procedure Move (dT : Duration) is
+      procedure Each (Cur : Object_Lists.Cursor) is
+         Obj : Object'Class := Object_Lists.Element (Cur);
+      begin
+         if Obj in Movable'Class then
+            Movable'Class (Obj).Move(dT);
+         end if;
+      end Each;
+   begin
+      Object_List.Iterate (Each'Access);
+   end Move;
+
+   procedure Move (Obj : in out Object_2; dT : Duration) is
+   begin
+      Obj.Pos.X := Obj.Pos.X + Obj.Vel.Vx * Float (dT);
+      Obj.Pos.Y := Obj.Pos.Y + Obj.Vel.Vy * Float (dT);
+   end Move;
+
+   function Absolute_Velocity (Obj : Object_X) return Float is
    begin
       return Elementary_Functions.Sqrt (Obj.Vx ** 2 + Obj.Vy ** 2);
    end Absolute_Velocity;
 
    -- dT : elapsed time
-   procedure Move (Obj : in out Object; dT : Duration) is
+   procedure Move (Obj : in out Object_X; dT : Duration) is
    begin
       Obj.X := Obj.X + Obj.Vx * Float (dT);
       Obj.Y := Obj.Y + Obj.Vy * Float (dT);
