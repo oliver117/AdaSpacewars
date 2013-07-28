@@ -58,6 +58,9 @@ package Stardust_Engine is
 
    procedure Cleanup;
 
+   procedure Star_Timer;
+
+   procedure Event_Loop;
 
 
    type Player_Input is
@@ -125,10 +128,15 @@ package Stardust_Engine is
    function Get_Screen_Width return int;
    function Get_Screen_Height return int;
 
+   function Want_Close return Boolean;
+
 private
 
    Screen_Width : int;
    Screen_Height : int;
+
+   Close : Boolean := False;
+   Redraw : Boolean := True;
 
    Disp : Display.ALLEGRO_DISPLAY;
    Event_Queue : Events.ALLEGRO_EVENT_QUEUE;

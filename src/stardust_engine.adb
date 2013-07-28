@@ -10,6 +10,7 @@ with Allegro5.Color;
 with Allegro5.Drawing;
 with Allegro5.Events;
 with Allegro5.Keyboard;
+with Allegro5.Keycodes;
 with Allegro5.System;
 
 with Allegro5.Allegro.Primitives;
@@ -27,7 +28,13 @@ package body Stardust_Engine is
          end if;
       end Each;
    begin
+      Drawing.al_clear_to_color (Color.al_map_rgb (r => 0,
+                                                   g => 0,
+                                                   b => 0));
+
       Object_List.Iterate (Each'Access);
+
+      Display.al_flip_display;
    end Draw;
 
    procedure Move (dT : Duration) is
@@ -105,6 +112,32 @@ package body Stardust_Engine is
       Events.al_destroy_event_queue (Event_Queue);
       System.al_uninstall_system;
    end Cleanup;
+
+   procedure Star_Timer is
+   begin
+      Timer.al_start_timer (Move_Timer);
+   end Star_Timer;
+
+   procedure Event_Loop is
+      Event : aliased Events.ALLEGRO_EVENT;
+   begin
+      Events.al_wait_for_event (Event_Queue, Event'Access);
+
+      if Event.c_type = Events.ALLEGRO_EVENT_DISPLAY_CLOSE then
+         Close := True;
+      elsif Event.c_type = Events.ALLEGRO_EVENT_KEY_DOWN and then
+        Event.keyboard.keycode = Keycodes.ALLEGRO_KEY_ESCAPE then
+         Close := True;
+      elsif Event.c_type = Events.ALLEGRO_EVENT_TIMER then
+         Move (1.0 / 60.0);
+         Redraw := True;
+      end if;
+
+      if Events.al_is_event_queue_empty (Event_Queue) /= 0 and Redraw then
+         Draw;
+         Redraw := False;
+      end if;
+   end Event_Loop;
 
 
 
@@ -405,6 +438,11 @@ package body Stardust_Engine is
    begin
       return Screen_Height;
    end Get_Screen_Height;
+
+   function Want_Close return Boolean is
+   begin
+      return Close;
+   end Want_Close;
 
 begin
    Players (One).X        := 100.0;

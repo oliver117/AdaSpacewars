@@ -7,11 +7,11 @@ project AdaSpacewars is
    for Object_Dir use "obj";
 
    package Builder is
-      for Default_Switches ("ada") use ("-s");
+      for Default_Switches ("ada") use ("-m");
    end Builder;
 
    package Compiler is
-      for Default_Switches ("ada") use ("-fdata-sections", "-ffunction-sections", "-gnato", "-fstack-check", "-gnatE", "-g", "-gnat12");
+      for Default_Switches ("ada") use ("-fdata-sections", "-ffunction-sections", "-gnato", "-fstack-check", "-gnatE", "-g", "-gnat12", "-O");
    end Compiler;
 
    package Binder is

@@ -1,9 +1,10 @@
+with Ada.Containers.Indefinite_Doubly_Linked_Lists;
 with Allegro5.Color;
 
 package Stardust_Engine.Particles is
    type Particle is new Object_2 and Drawable with
       record
-         Age : Integer; -- in fps
+         TTL : Integer; -- in fps
          Color : Allegro5.Color.ALLEGRO_COLOR;
       end record;
 
@@ -18,6 +19,19 @@ package Stardust_Engine.Particles is
       with procedure Draw_Particle (P : Particle_T);
       with procedure Move_Particle (P : in out Particle_T; dT : Duration) is Move;
    package Particle_System is
-      Parts : Object_Lists.List := Object_Lists.Empty_List;
+      package Particle_Lists is new Ada.Containers.Indefinite_Doubly_Linked_Lists (Particle_T);
+
+      Particles : Particle_Lists.List := Particle_Lists.Empty_List;
+      type System_Handle is new Drawable and Movable with private;
+
+      function Get_Handle return System_Handle;
+
+      procedure Draw (SH : System_Handle);
+      procedure Move (SH : in out System_Handle; dT : Duration);
+
+   private
+      type System_Handle is new Drawable and Movable with null record;
+      Handle : System_Handle;
    end Particle_System;
+
 end Stardust_Engine.Particles;

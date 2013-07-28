@@ -1,3 +1,6 @@
+with Ada.Numerics;
+with GNAT.Random_Numbers;
+with Ada.Numerics.Elementary_Functions;
 with Ada.Text_IO;
 with Interfaces.C; use Interfaces.C;
 
@@ -12,125 +15,121 @@ with Allegro5.Keycodes;
 with Allegro5.Allegro.Primitives;
 with Allegro5.System;
 with Allegro5.Timer;
+with Allegro5.Transformations;
 use Allegro5;
+use Allegro5.Allegro;
 
-with Stardust_Engine;
+with Stardust_Engine; use Stardust_Engine;
 with Stardust_Engine.Particles;
 
 procedure Spacewars is
+   procedure Draw (P : Particles.Particle) is
+   begin
+      if P.TTL > 0 then
+         Drawing.al_draw_pixel (x     => P.Pos.X,
+                                y     => P.Pos.Y,
+                                color => P.Color);
+      end if;
+   end Draw;
+
+   procedure Move (P : in out Particles.Particle; dT : Duration) is
+   begin
+      if P.TTL <= 0 then
+         P.TTL := 300;
+         P.Pos := Position_2'(400.0, 300.0);
+      end if;
+      Object_2 (P).Move (dT);
+   end Move;
+
+   package Particle_Sprayer is new Particles.Particle_System (Particle_T    => Particles.Particle,
+                                                              Draw_Particle => Draw,
+                                                              Move_Particle => Move);
+
+   type Spaceship is new Object_2 and Drawable with null record;
+
+   Player_1 : Spaceship := Spaceship'(Pos => Position_2'(X => 100.0,
+                                                         Y => 100.0),
+                                      Vel => Velocity_2'(Vx => 0.0,
+                                                         Vy => 0.0));
+
+   procedure Draw (Sp : Spaceship) is
+   begin
+
+      -- left
+      Primitives.al_draw_line (x1        => Sp.Pos.X,
+                               y1        => Sp.Pos.Y - 10.0,
+                               x2        => Sp.Pos.X - 10.0,
+                               y2        => Sp.Pos.Y + 7.0,
+                               color     => Color.al_map_rgb_f (0.5, 1.0, 0.5),
+                               thickness => 1.0);
+      -- right
+      Primitives.al_draw_line (x1        => Sp.Pos.X,
+                               y1        => Sp.Pos.Y - 10.0,
+                               x2        => Sp.Pos.X + 10.0,
+                               y2        => Sp.Pos.Y + 7.0,
+                               color     => Color.al_map_rgb_f (0.5, 1.0, 0.5),
+                               thickness => 1.0);
+      -- bottom
+      Primitives.al_draw_line (x1        => Sp.Pos.X - 10.0,
+                               y1        => Sp.Pos.Y + 7.0,
+                               x2        => Sp.Pos.X + 10.0,
+                               y2        => Sp.Pos.Y + 7.0,
+                               color     => Color.al_map_rgb_f (0.5, 1.0, 0.5),
+                               thickness => 1.0);
+   end Draw;
+
+   Trans : aliased Transformations.ALLEGRO_TRANSFORM;
 begin
    Ada.Text_IO.Put_Line ("Starting SpaceWars...");
 
-   if not Stardust_Engine.Initialize (800, 600) then
+   if not Initialize (800, 600) then
       return;
    end if;
 
-   Stardust_Engine.Create_Starmap;
+   Transformations.al_identity_transform (Trans'Access);
+   Transformations.al_translate_transform (Trans'Access, 10.0, 10.0);
+   Transformations.al_scale_transform (Trans'Access, 2.0, 3.0);
+   Transformations.al_rotate_transform (Trans'Access, 0.1);
+   Transformations.al_use_transform (Trans);
 
    declare
-      Event : aliased Events.ALLEGRO_EVENT;
+      Angle : Float;
+      Speed : Float;
 
-      Player1_Input : Stardust_Engine.Player_Input;
-      Player2_Input : Stardust_Engine.Player_Input;
-
-      use Keycodes;
-
-      Redraw : Boolean := True;
+      use Ada.Numerics.Elementary_Functions;
+      use GNAT.Random_Numbers;
+      RNG : Generator;
    begin
-      Main_Loop:
-      loop
-         --Events.al_wait_for_event(Event_Queue, Event'Access);
+      for I in Integer range 1 .. 1_000 loop
+         Angle := Random_Gaussian (RNG) * 1.0 * Ada.Numerics.Pi;
+         Speed := Sqrt (Random (RNG) * 350.0);
 
-         if Event.c_type = Events.ALLEGRO_EVENT_DISPLAY_CLOSE then
-            goto cleanup;
-         end if;
-
-         if Event.c_type = Events.ALLEGRO_EVENT_KEY_DOWN then
-            case Event.keyboard.keycode is
-               when ALLEGRO_KEY_ESCAPE =>
-                  goto cleanup;
-
-               when ALLEGRO_KEY_A =>
-                  Player1_Input.Turn_Left := True;
-               when ALLEGRO_KEY_D =>
-                  Player1_Input.Turn_Right := True;
-               when ALLEGRO_KEY_W =>
-                  Player1_Input.Accelerate := True;
-               when ALLEGRO_KEY_S =>
-                  Player1_Input.Decelerate := True;
-               when ALLEGRO_KEY_SPACE =>
-                  Player1_Input.Fire := True;
-
-               when ALLEGRO_KEY_LEFT =>
-                  Player2_Input.Turn_Left := True;
-               when ALLEGRO_KEY_RIGHT =>
-                  Player2_Input.Turn_Right := True;
-               when ALLEGRO_KEY_UP =>
-                  Player2_Input.Accelerate := True;
-               when ALLEGRO_KEY_DOWN =>
-                  Player2_Input.Decelerate := True;
-               when ALLEGRO_KEY_ENTER =>
-                  Player2_Input.Fire := True;
-
-               when others =>
-                  null;
-            end case;
-         elsif Event.c_type = Events.ALLEGRO_EVENT_KEY_UP then
-            case Event.keyboard.keycode is
-               when ALLEGRO_KEY_A =>
-                  Player1_Input.Turn_Left := False;
-               when ALLEGRO_KEY_D =>
-                  Player1_Input.Turn_Right := False;
-               when ALLEGRO_KEY_W =>
-                  Player1_Input.Accelerate := False;
-               when ALLEGRO_KEY_S =>
-                  Player1_Input.Decelerate := False;
-               when ALLEGRO_KEY_SPACE =>
-                  Player1_Input.Fire := False;
-
-               when ALLEGRO_KEY_LEFT =>
-                  Player2_Input.Turn_Left := False;
-               when ALLEGRO_KEY_RIGHT =>
-                  Player2_Input.Turn_Right := False;
-               when ALLEGRO_KEY_UP =>
-                  Player2_Input.Accelerate := False;
-               when ALLEGRO_KEY_DOWN =>
-                  Player2_Input.Decelerate := False;
-               when ALLEGRO_KEY_ENTER =>
-                  Player2_Input.Fire := False;
-
-               when others =>
-                  null;
-            end case;
-
-         elsif Event.c_type = Events.ALLEGRO_EVENT_TIMER then
-            Stardust_Engine.Move (Player1_Input, Player2_Input, 1.0 / 60.0);
-            Player1_Input.Fire := False;
-            Player2_Input.Fire := False;
-            Redraw := True;
-
-         end if;
-
-         --if Events.al_is_event_queue_empty (Event_Queue) /= 0 and Redraw then
-
-            Drawing.al_clear_to_color (Color.al_map_rgb (r => 0,
-                                                         g => 0,
-                                                         b => 0));
-
-            Stardust_Engine.Draw_Starmap;
-            Stardust_Engine.Draw_Players;
-            Stardust_Engine.Render_Projectiles;
-            Display.al_flip_display;
-
-            Redraw := False;
-         --end if;
-
-      end loop Main_Loop;
+         Particle_Sprayer.Particles.Append (Particles.Particle'(Pos   => Position_2'(400.0, 300.0),
+                                                                Vel   => Velocity_2'(Speed * Cos (Angle), Speed * Sin (Angle)),
+                                                                TTL   => Integer (Float'(Random (RNG)) * 100.0) + 100,
+                                                                Color => Color.al_map_rgb_f (r => Random (RNG),
+                                                                                             g => Random (RNG),
+                                                                                             b => Random (RNG))));
+      end loop;
    end;
+
+
+   Object_List.Append (Particle_Sprayer.Get_Handle);
+   Object_List.Append (Player_1);
+
+   Star_Timer;
+
+   Main_Loop:
+   loop
+      Event_Loop;
+
+      if Want_Close then
+         goto cleanup;
+      end if;
+
+   end loop Main_Loop;
 
    <<cleanup>>
    Stardust_Engine.Cleanup;
-
-
 
 end Spacewars;

@@ -1,18 +1,36 @@
-with Allegro5.Color;
-with Allegro5.Display;
+with Ada.Text_IO;
 
-generic
-   with procedure Draw (P : Particle
-package Stardust_Engine.Particles is
-   type Particle is new Object_2 with
-      record
-         Age : Integer; -- in fps
-         Color : Allegro5.Color.ALLEGRO_COLOR;
-      end record;
+package body Stardust_Engine.Particles is
 
-   procedure Move (P : in out Particle; dT : Duration) is
-   begin
-      Object_2 (P).Move;
-      P.Age := P.Age += 1;
-   end Move;
+   package body Particle_System is
+      function Get_Handle return System_Handle is
+      begin
+         return Handle;
+      end Get_Handle;
+
+      procedure Draw (SH : System_Handle) is
+         procedure Each (Cur : Particle_Lists.Cursor) is
+            P : Particle_T := Particle_Lists.Element (Cur);
+         begin
+           Draw_Particle (P);
+         end Each;
+      begin
+         Particles.Iterate (Each'Access);
+      end Draw;
+
+      procedure Move (SH : in out System_Handle; dT : Duration) is
+         procedure Each (Cur : Particle_Lists.Cursor) is
+            P : Particle_T := Particle_Lists.Element (Cur);
+         begin
+            Move_Particle (P, dT);
+            P.TTL := P.TTL - 1;
+
+            Particles.Replace_Element (Cur, P);
+         end Each;
+      begin
+         Particles.Iterate (Each'Access);
+      end Move;
+
+   end Particle_System;
+
 end Stardust_Engine.Particles;
