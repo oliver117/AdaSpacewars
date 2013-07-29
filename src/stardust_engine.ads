@@ -60,7 +60,9 @@ package Stardust_Engine is
 
    procedure Star_Timer;
 
-   procedure Event_Loop;
+   function Wait_For_Event return Events.ALLEGRO_EVENT;
+
+   procedure Handle_Event (Event : Events.ALLEGRO_EVENT);
 
 
    type Player_Input is

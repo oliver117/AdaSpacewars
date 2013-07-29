@@ -20,7 +20,7 @@ project AdaSpacewars is
 
    package Linker is
       for Default_Switches ("ada") use ("-g", "-Wl,--gc-sections");
-      for Linker_Options use ("-lallegro", "-lallegro_primitives");
+      for Linker_Options use ("-lallegro", "-lallegro_image", "-lallegro_primitives");
    end Linker;
 
 end AdaSpacewars;

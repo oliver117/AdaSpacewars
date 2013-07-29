@@ -13,6 +13,7 @@ with Allegro5.Keyboard;
 with Allegro5.Keycodes;
 with Allegro5.System;
 
+with Allegro5.Allegro.Image;
 with Allegro5.Allegro.Primitives;
 
 use  Allegro5; use Allegro5.Allegro;
@@ -84,6 +85,14 @@ package body Stardust_Engine is
          Ada.Text_IO.Put_Line ("OK");
       end if;
 
+      Ada.Text_IO.Put ("Image ... ");
+      if Image.al_init_image_addon = 0 then
+         Ada.Text_IO.Put_Line ("FAIL");
+         Success := False;
+      else
+         Ada.Text_IO.Put_Line ("OK");
+      end if;
+
       Event_Queue := Events.al_create_event_queue;
 
       Screen_Width := int (Width);
@@ -118,11 +127,15 @@ package body Stardust_Engine is
       Timer.al_start_timer (Move_Timer);
    end Star_Timer;
 
-   procedure Event_Loop is
+   function Wait_For_Event return Events.ALLEGRO_EVENT is
       Event : aliased Events.ALLEGRO_EVENT;
    begin
       Events.al_wait_for_event (Event_Queue, Event'Access);
+      return Event;
+   end Wait_For_Event;
 
+   procedure Handle_Event (Event : Events.ALLEGRO_EVENT) is
+   begin
       if Event.c_type = Events.ALLEGRO_EVENT_DISPLAY_CLOSE then
          Close := True;
       elsif Event.c_type = Events.ALLEGRO_EVENT_KEY_DOWN and then
@@ -137,7 +150,7 @@ package body Stardust_Engine is
          Draw;
          Redraw := False;
       end if;
-   end Event_Loop;
+   end Handle_Event;
 
 
 

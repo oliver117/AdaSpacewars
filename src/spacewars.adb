@@ -3,8 +3,12 @@ with GNAT.Random_Numbers;
 with Ada.Numerics.Elementary_Functions;
 with Ada.Text_IO;
 with Interfaces.C; use Interfaces.C;
+with Interfaces.C.Strings;
 
 with Allegro5.Base;
+with Allegro5.Bitmap;
+with Allegro5.Bitmap_Draw;
+with Allegro5.Bitmap_IO;
 with Allegro5.Color;
 with Allegro5.Display;
 with Allegro5.Drawing;
@@ -35,8 +39,8 @@ procedure Spacewars is
    procedure Move (P : in out Particles.Particle; dT : Duration) is
    begin
       if P.TTL <= 0 then
-         P.TTL := 300;
-         P.Pos := Position_2'(400.0, 300.0);
+         P.TTL := 100;
+         P.Pos := Position_2'(100.0, 120.0);
       end if;
       Object_2 (P).Move (dT);
    end Move;
@@ -52,45 +56,46 @@ procedure Spacewars is
                                       Vel => Velocity_2'(Vx => 0.0,
                                                          Vy => 0.0));
 
+   Flyer1 : Bitmap.ALLEGRO_BITMAP;
+   Singularity : Bitmap.ALLEGRO_BITMAP;
+
+   Rotation : Float := 0.0;
+
    procedure Draw (Sp : Spaceship) is
    begin
+      Bitmap_Draw.al_draw_tinted_bitmap (bitmap => Flyer1,
+                                         tint   => Color.al_map_rgb_f(1.0, 0.0, 0.0),
+                                         dx     => 300.0,
+                                         dy     => 300.0,
+                                         flags  => 0);
 
-      -- left
-      Primitives.al_draw_line (x1        => Sp.Pos.X,
-                               y1        => Sp.Pos.Y - 10.0,
-                               x2        => Sp.Pos.X - 10.0,
-                               y2        => Sp.Pos.Y + 7.0,
-                               color     => Color.al_map_rgb_f (0.5, 1.0, 0.5),
-                               thickness => 1.0);
-      -- right
-      Primitives.al_draw_line (x1        => Sp.Pos.X,
-                               y1        => Sp.Pos.Y - 10.0,
-                               x2        => Sp.Pos.X + 10.0,
-                               y2        => Sp.Pos.Y + 7.0,
-                               color     => Color.al_map_rgb_f (0.5, 1.0, 0.5),
-                               thickness => 1.0);
-      -- bottom
-      Primitives.al_draw_line (x1        => Sp.Pos.X - 10.0,
-                               y1        => Sp.Pos.Y + 7.0,
-                               x2        => Sp.Pos.X + 10.0,
-                               y2        => Sp.Pos.Y + 7.0,
-                               color     => Color.al_map_rgb_f (0.5, 1.0, 0.5),
-                               thickness => 1.0);
+      Bitmap_Draw.al_draw_tinted_rotated_bitmap (bitmap => Flyer1,
+                                                 tint   => Color.al_map_rgb_f(0.0, 0.0, 1.0),
+                                                 cx     => 16.0,
+                                                 cy     => 16.0,
+                                                 dx     => 100.0,
+                                                 dy     => 100.0,
+                                                 angle  => Rotation,
+                                                 flags  => 0);
+
+      Bitmap_Draw.al_draw_tinted_rotated_bitmap (bitmap => Singularity,
+                                                 tint   => Color.al_map_rgb_f(1.0, 0.0, 1.0),
+                                                 cx     => 16.0,
+                                                 cy     => 16.0,
+                                                 dx     => 500.0,
+                                                 dy     => 500.0,
+                                                 angle  => Rotation,
+                                                 flags  => 0);
    end Draw;
-
-   Trans : aliased Transformations.ALLEGRO_TRANSFORM;
 begin
    Ada.Text_IO.Put_Line ("Starting SpaceWars...");
 
-   if not Initialize (800, 600) then
+   if not Initialize (1200, 800) then
       return;
    end if;
 
-   Transformations.al_identity_transform (Trans'Access);
-   Transformations.al_translate_transform (Trans'Access, 10.0, 10.0);
-   Transformations.al_scale_transform (Trans'Access, 2.0, 3.0);
-   Transformations.al_rotate_transform (Trans'Access, 0.1);
-   Transformations.al_use_transform (Trans);
+   Flyer1 := Bitmap_IO.al_load_bitmap (Interfaces.C.Strings.New_String ("flyer1.png"));
+   Singularity := Bitmap_IO.al_load_bitmap (Interfaces.C.Strings.New_String ("singularity.png"));
 
    declare
       Angle : Float;
@@ -100,34 +105,45 @@ begin
       use GNAT.Random_Numbers;
       RNG : Generator;
    begin
-      for I in Integer range 1 .. 1_000 loop
-         Angle := Random_Gaussian (RNG) * 1.0 * Ada.Numerics.Pi;
-         Speed := Sqrt (Random (RNG) * 350.0);
+      for I in Integer range 1 .. 100 loop
+         Angle := Random_Gaussian (RNG) * 0.1 * Ada.Numerics.Pi + Ada.Numerics.PI / 2.0;
+         Speed := Sqrt (Random (RNG) * 250.0) * 5.0;
 
-         Particle_Sprayer.Particles.Append (Particles.Particle'(Pos   => Position_2'(400.0, 300.0),
+         Particle_Sprayer.Particles.Append (Particles.Particle'(Pos   => Position_2'(100.0, 120.0),
                                                                 Vel   => Velocity_2'(Speed * Cos (Angle), Speed * Sin (Angle)),
-                                                                TTL   => Integer (Float'(Random (RNG)) * 100.0) + 100,
-                                                                Color => Color.al_map_rgb_f (r => Random (RNG),
-                                                                                             g => Random (RNG),
-                                                                                             b => Random (RNG))));
+                                                                TTL   => Integer (Float'(Random (RNG)) * 100.0) + 50,
+                                                                Color => Color.al_map_rgb_f (r => 0.0,
+                                                                                             g => 1.0,
+                                                                                             b => 0.0)));
       end loop;
    end;
 
 
-   Object_List.Append (Particle_Sprayer.Get_Handle);
+   -- Object_List.Append (Particle_Sprayer.Get_Handle);
    Object_List.Append (Player_1);
 
    Star_Timer;
 
-   Main_Loop:
-   loop
-      Event_Loop;
+   declare
+      Event : Events.ALLEGRO_EVENT;
+   begin
+      Main_Loop:
+      loop
+         Event := Wait_For_Event;
+         if Event.c_type = Events.ALLEGRO_EVENT_KEY_DOWN then
+            if Event.keyboard.keycode = Keycodes.ALLEGRO_KEY_RIGHT then
+               Rotation := Rotation + 0.1 * Ada.Numerics.Pi;
+            end if;
+         end if;
 
-      if Want_Close then
-         goto cleanup;
-      end if;
+         Handle_Event (Event);
 
-   end loop Main_Loop;
+         if Want_Close then
+            goto cleanup;
+         end if;
+
+      end loop Main_Loop;
+   end;
 
    <<cleanup>>
    Stardust_Engine.Cleanup;
