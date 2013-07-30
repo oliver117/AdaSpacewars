@@ -14,12 +14,14 @@ with Allegro5.Display;
 with Allegro5.Drawing;
 with Allegro5.Error;
 with Allegro5.Events;
+with Allegro5.Allegro.Font;
 with Allegro5.Keyboard;
 with Allegro5.Keycodes;
 with Allegro5.Allegro.Primitives;
 with Allegro5.System;
 with Allegro5.Timer;
 with Allegro5.Transformations;
+with Allegro5.Allegro.TTF;
 use Allegro5;
 use Allegro5.Allegro;
 
@@ -57,36 +59,67 @@ procedure Spacewars is
                                                          Vy => 0.0));
 
    Flyer1 : Bitmap.ALLEGRO_BITMAP;
+   Flyer2 : Bitmap.ALLEGRO_BITMAP;
    Singularity : Bitmap.ALLEGRO_BITMAP;
 
    Rotation : Float := 0.0;
 
    procedure Draw (Sp : Spaceship) is
    begin
-      Bitmap_Draw.al_draw_tinted_bitmap (bitmap => Flyer1,
-                                         tint   => Color.al_map_rgb_f(1.0, 0.0, 0.0),
-                                         dx     => 300.0,
-                                         dy     => 300.0,
-                                         flags  => 0);
+      Bitmap_Draw.al_draw_tinted_scaled_rotated_bitmap (bitmap => Flyer1,
+                                                        tint   => Color.al_map_rgb_f(1.0, 0.2, 0.2),
+                                                        cx     => 16.0,
+                                                        cy     => 16.0,
+                                                        dx     => 300.0,
+                                                        dy     => 300.0,
+                                                        xscale => 0.05,
+                                                        yscale => 0.05,
+                                                        angle  => Rotation,
+                                                        flags  => 0);
 
-      Bitmap_Draw.al_draw_tinted_rotated_bitmap (bitmap => Flyer1,
-                                                 tint   => Color.al_map_rgb_f(0.0, 0.0, 1.0),
-                                                 cx     => 16.0,
-                                                 cy     => 16.0,
-                                                 dx     => 100.0,
-                                                 dy     => 100.0,
-                                                 angle  => Rotation,
-                                                 flags  => 0);
+      Bitmap_Draw.al_draw_tinted_scaled_rotated_bitmap (bitmap => Flyer2,
+                                                        tint   => Color.al_map_rgb_f(0.2, 0.2, 1.0),
+                                                        cx     => 16.0,
+                                                        cy     => 16.0,
+                                                        dx     => 100.0,
+                                                        dy     => 100.0,
+                                                        xscale => 0.05,
+                                                        yscale => 0.05,
+                                                        angle  => Rotation,
+                                                        flags  => 0);
 
-      Bitmap_Draw.al_draw_tinted_rotated_bitmap (bitmap => Singularity,
-                                                 tint   => Color.al_map_rgb_f(1.0, 0.0, 1.0),
-                                                 cx     => 16.0,
-                                                 cy     => 16.0,
-                                                 dx     => 500.0,
-                                                 dy     => 500.0,
-                                                 angle  => Rotation,
-                                                 flags  => 0);
+      Bitmap_Draw.al_draw_tinted_scaled_rotated_bitmap (bitmap => Singularity,
+                                                        tint   => Color.al_map_rgb_f(1.0, 0.0, 1.0),
+                                                        cx     => 16.0,
+                                                        cy     => 16.0,
+                                                        dx     => 500.0,
+                                                        dy     => 500.0,
+                                                        xscale => 1.0,
+                                                        yscale => 1.0,
+                                                        angle  => Rotation,
+                                                        flags  => 0);
    end Draw;
+
+   type Writing (Length : Natural) is new Drawable with
+      record
+         Pos : Position_2;
+         Text : String (1 .. Length);
+         Font : access Allegro.Font.ALLEGRO_FONT;
+         Color : Allegro5.Color.ALLEGRO_COLOR;
+      end record;
+
+   procedure Draw (W : Writing) is
+   begin
+      Font.al_draw_text (font  => W.Font,
+                         color => W.Color,
+                         x     => W.Pos.X,
+                         y     => W.Pos.Y,
+                         flags => Font.ALLEGRO_ALIGN_INTEGER,
+                         text  => Interfaces.C.Strings.New_String (W.Text));
+   end Draw;
+
+   Title : Writing (12);
+   Sax_Mono : access Font.ALLEGRO_FONT;
 begin
    Ada.Text_IO.Put_Line ("Starting SpaceWars...");
 
@@ -94,8 +127,27 @@ begin
       return;
    end if;
 
-   Flyer1 := Bitmap_IO.al_load_bitmap (Interfaces.C.Strings.New_String ("flyer1.png"));
-   Singularity := Bitmap_IO.al_load_bitmap (Interfaces.C.Strings.New_String ("singularity.png"));
+   Font.al_init_font_addon;
+   if TTF.al_init_ttf_addon = 0 then
+      Ada.Text_IO.Put_Line ("Failed to initialize TTF addon");
+   end if;
+
+
+   Flyer1 := Bitmap_IO.al_load_bitmap (Interfaces.C.Strings.New_String ("../flyer1.png"));
+   Flyer2 := Bitmap_IO.al_load_bitmap (Interfaces.C.Strings.New_String ("../flyer2.png"));
+   Singularity := Bitmap_IO.al_load_bitmap (Interfaces.C.Strings.New_String ("../singularity.png"));
+   Sax_Mono := TTF.al_load_ttf_font (filename => Interfaces.C.Strings.New_String ("../font/saxmono.ttf"),
+                                     size     => 64,
+                                     flags    => 0);
+
+   Title.Pos.X := 400.0;
+   Title.Pos.Y := 400.0;
+   Title.Text := String'("AdaSpacewars");
+   Title.Font := Sax_Mono;
+   Title.Color := Color.al_map_rgba_f (r => 1.0,
+                                       g => 1.0,
+                                       b => 1.0,
+                                       a => 1.0);
 
    declare
       Angle : Float;
@@ -112,15 +164,17 @@ begin
          Particle_Sprayer.Particles.Append (Particles.Particle'(Pos   => Position_2'(100.0, 120.0),
                                                                 Vel   => Velocity_2'(Speed * Cos (Angle), Speed * Sin (Angle)),
                                                                 TTL   => Integer (Float'(Random (RNG)) * 100.0) + 50,
-                                                                Color => Color.al_map_rgb_f (r => 0.0,
-                                                                                             g => 1.0,
-                                                                                             b => 0.0)));
+                                                                Color => Color.al_map_rgba_f (r => 0.0,
+                                                                                              g => 1.0,
+                                                                                              b => 0.0,
+                                                                                              a => 0.5)));
       end loop;
    end;
 
 
    -- Object_List.Append (Particle_Sprayer.Get_Handle);
    Object_List.Append (Player_1);
+   Object_List.Append (Title);
 
    Star_Timer;
 
@@ -132,7 +186,7 @@ begin
          Event := Wait_For_Event;
          if Event.c_type = Events.ALLEGRO_EVENT_KEY_DOWN then
             if Event.keyboard.keycode = Keycodes.ALLEGRO_KEY_RIGHT then
-               Rotation := Rotation + 0.1 * Ada.Numerics.Pi;
+               Rotation := Rotation + 0.01 * Ada.Numerics.Pi;
             end if;
          end if;
 
