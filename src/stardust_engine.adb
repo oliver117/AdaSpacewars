@@ -1,14 +1,7 @@
-with Ada.Calendar;
 with Ada.Numerics.Elementary_Functions; use Ada.Numerics;
-with Ada.Numerics.Float_Random;
 with Ada.Text_IO;
 
-with Interfaces.C; use Interfaces.C;
-
-
-with Allegro5.Color;
 with Allegro5.Drawing;
-with Allegro5.Events;
 with Allegro5.Keyboard;
 with Allegro5.Keycodes;
 with Allegro5.System;
@@ -16,7 +9,7 @@ with Allegro5.System;
 with Allegro5.Addon.Image;
 with Allegro5.Addon.Primitives;
 
-use  Allegro5; use Allegro5.Addon;
+use Allegro5.Addon;
 
 package body Stardust_Engine is
 
@@ -206,37 +199,6 @@ package body Stardust_Engine is
                thickness => 2.0);
       end case;
    end Draw;
-
-   procedure Draw (S : Star) is
-      Com : unsigned_char       := unsigned_char (255.0 * S.Luminance);
-      Col : Color.ALLEGRO_COLOR :=
-         Color.al_map_rgb (r => Com, g => Com, b => Com);
-   begin
-      Drawing.al_draw_pixel (x => S.X, y => S.Y, color => Col);
-   end Draw;
-
-   procedure Create_Starmap is
-   begin
-      for I in Starmap'Range loop
-         Starmap (I) :=
-           Star'
-           (X         => Float (Screen_Width) *
-                         Float_Random.Random (Float_RNG),
-            Y         => Float (Screen_Height) *
-                         Float_Random.Random (Float_RNG),
-            Vx        => 0.0,
-            Vy        => 0.0,
-            Rotation  => 0.0,
-            Luminance => Float_Random.Random (Float_RNG));
-      end loop;
-   end Create_Starmap;
-
-   procedure Draw_Starmap is
-   begin
-      for I in Starmap'Range loop
-         Starmap (I).Draw;
-      end loop;
-   end Draw_Starmap;
 
    procedure Draw_Players is
    begin
@@ -451,6 +413,11 @@ package body Stardust_Engine is
    begin
       return Screen_Height;
    end Get_Screen_Height;
+
+   function Get_Display return Display.ALLEGRO_DISPLAY is
+   begin
+      return Disp;
+   end Get_Display;
 
    function Want_Close return Boolean is
    begin

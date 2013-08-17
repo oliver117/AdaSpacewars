@@ -11,7 +11,7 @@ project AdaSpacewars is
    end Builder;
 
    package Compiler is
-      for Default_Switches ("ada") use ("-fdata-sections", "-ffunction-sections", "-gnato", "-fstack-check", "-gnatE", "-g", "-gnat12", "-O");
+      for Default_Switches ("ada") use ("-gnatwa", "-fdata-sections", "-ffunction-sections", "-gnato", "-fstack-check", "-gnatE", "-g", "-gnat12");
    end Compiler;
 
    package Binder is

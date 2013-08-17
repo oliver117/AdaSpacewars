@@ -1,4 +1,3 @@
-with Ada.Numerics.Elementary_Functions; use Ada.Numerics;
 with Ada.Numerics.Float_Random;
 with Ada.Calendar;
 with Ada.Containers.Indefinite_Doubly_Linked_Lists;
@@ -109,17 +108,6 @@ package Stardust_Engine is
 
    procedure Draw (Sp : Spaceship);
 
-   type Star is new Object_X with
-      record
-         Luminance: Float; -- range
-      end record;
-
-   procedure Draw (S : Star);
-
-   type Star_Array is array (Integer range <>) of Star;
-
-   procedure Create_Starmap;
-   procedure Draw_Starmap;
 
    procedure Draw_Players;
 
@@ -129,6 +117,7 @@ package Stardust_Engine is
 
    function Get_Screen_Width return int;
    function Get_Screen_Height return int;
+   function Get_Display return Display.ALLEGRO_DISPLAY;
 
    function Want_Close return Boolean;
 
@@ -144,9 +133,7 @@ private
    Event_Queue : Events.ALLEGRO_EVENT_QUEUE;
    Move_Timer : Timer.ALLEGRO_TIMER;
 
-   Float_RNG : Float_Random.Generator;
-
-   Starmap : Star_Array (1 .. 2_500);
+   Float_RNG : Ada.Numerics.Float_Random.Generator;
 
    Players : array (Player_Number) of Spaceship;
 
