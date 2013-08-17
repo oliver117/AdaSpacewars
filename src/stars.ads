@@ -15,6 +15,8 @@ package Stars is
          Stars : Star_Array (1 .. n);
       end record;
 
+   procedure Random_Stars (SM : in out Star_Map; Max_X : in Float; Max_Y : in Float);
+
    procedure Draw (S : in Star);
    procedure Draw (SM : in Star_Map);
 

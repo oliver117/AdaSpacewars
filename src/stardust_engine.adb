@@ -13,10 +13,10 @@ with Allegro5.Keyboard;
 with Allegro5.Keycodes;
 with Allegro5.System;
 
-with Allegro5.Allegro.Image;
-with Allegro5.Allegro.Primitives;
+with Allegro5.Addon.Image;
+with Allegro5.Addon.Primitives;
 
-use  Allegro5; use Allegro5.Allegro;
+use  Allegro5; use Allegro5.Addon;
 
 package body Stardust_Engine is
 
@@ -78,7 +78,7 @@ package body Stardust_Engine is
       end if;
 
       Ada.Text_IO.Put ("Primitives ... ");
-      if Allegro.Primitives.al_init_primitives_addon = 0 then
+      if Addon.Primitives.al_init_primitives_addon = 0 then
          Ada.Text_IO.Put_Line ("FAIL");
          Success := False;
       else

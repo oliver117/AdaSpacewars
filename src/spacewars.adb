@@ -14,16 +14,16 @@ with Allegro5.Display;
 with Allegro5.Drawing;
 with Allegro5.Error;
 with Allegro5.Events;
-with Allegro5.Allegro.Font;
+with Allegro5.Addon.Font;
 with Allegro5.Keyboard;
 with Allegro5.Keycodes;
-with Allegro5.Allegro.Primitives;
+with Allegro5.Addon.Primitives;
 with Allegro5.System;
 with Allegro5.Timer;
 with Allegro5.Transformations;
-with Allegro5.Allegro.TTF;
+with Allegro5.Addon.TTF;
 use Allegro5;
-use Allegro5.Allegro;
+use Allegro5.Addon;
 
 with Stardust_Engine; use Stardust_Engine;
 with Stardust_Engine.Particles;
@@ -104,7 +104,7 @@ procedure Spacewars is
       record
          Pos : Position_2;
          Text : String (1 .. Length);
-         Font : access Allegro.Font.ALLEGRO_FONT;
+         Font : access Addon.Font.ALLEGRO_FONT;
          Color : Allegro5.Color.ALLEGRO_COLOR;
       end record;
 
@@ -120,6 +120,8 @@ procedure Spacewars is
 
    Title : Writing (12);
    Sax_Mono : access Font.ALLEGRO_FONT;
+
+   Star_Bitmap : Allegro5.Bitmap.ALLEGRO_BITMAP;
 begin
    Ada.Text_IO.Put_Line ("Starting SpaceWars...");
 
@@ -148,6 +150,9 @@ begin
                                        g => 1.0,
                                        b => 1.0,
                                        a => 1.0);
+
+   Star_Bitmap := Allegro5.Bitmap.al_create_bitmap (w => Get_Screen_Width,
+                                                    h => Get_Screen_Height);
 
    declare
       Angle : Float;
