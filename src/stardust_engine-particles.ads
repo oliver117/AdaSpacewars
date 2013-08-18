@@ -26,7 +26,7 @@ package Stardust_Engine.Particles is
 
       function Get_Handle return System_Handle;
 
-      procedure Draw (SH : System_Handle);
+      procedure Draw (SH : in System_Handle);
       procedure Move (SH : in out System_Handle; dT : Duration);
 
    private

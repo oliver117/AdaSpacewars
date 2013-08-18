@@ -1,4 +1,3 @@
-with Ada.Text_IO;
 
 package body Stardust_Engine.Particles is
 
@@ -8,9 +7,9 @@ package body Stardust_Engine.Particles is
          return Handle;
       end Get_Handle;
 
-      procedure Draw (SH : System_Handle) is
+      procedure Draw (SH : in System_Handle) is
          procedure Each (Cur : Particle_Lists.Cursor) is
-            P : Particle_T := Particle_Lists.Element (Cur);
+            P : constant Particle_T := Particle_Lists.Element (Cur);
          begin
            Draw_Particle (P);
          end Each;

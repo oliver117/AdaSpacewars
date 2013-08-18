@@ -1,5 +1,4 @@
 with Ada.Numerics.Float_Random;
-with Ada.Calendar;
 with Ada.Containers.Indefinite_Doubly_Linked_Lists;
 with Interfaces.C; use Interfaces.C;
 
@@ -13,6 +12,7 @@ package Stardust_Engine is
 
    -- Abstract
    type Object is interface;
+   type Object_Class_Access is access all Object'Class;
    type Drawable is interface and Object;
    type Movable is interface and Object;
 
@@ -20,30 +20,43 @@ package Stardust_Engine is
    procedure Move (M : in out Movable; dT : Duration) is abstract;
 
    package Object_Lists is new
-     Ada.Containers.Indefinite_Doubly_Linked_Lists (Object'Class);
+     Ada.Containers.Indefinite_Doubly_Linked_Lists (Object_Class_Access);
 
    Object_List : Object_Lists.List := Object_Lists.Empty_List;
+   -- TODO: make that a tree/multilist?, Z-index?
 
    procedure Draw; -- Draws all drawables in the object list.
    procedure Move (dT : Duration); -- Moves all movables in the object list.
 
    -- Concrete
-   type Position_2 is
+   type Vector_2 is
       record
          X : Float;
          Y : Float;
       end record;
 
-   type Velocity_2 is
-      record
-         Vx : Float;
-         Vy : Float;
-      end record;
+   Null_Vector_2 : constant Vector_2 := Vector_2'(0.0, 0.0);
 
+   function Get_Direction (Vec : in Vector_2) return Float;
+   function Get_Speed (Vec : in Vector_2) return Float;
+
+   procedure Set_Direction (Vec : in out Vector_2; Dir : in Float) with
+     Post => Get_Direction (Vec) = Dir;
+
+   procedure Set_Speed (Vec : in out Vector_2; Speed : in Float) with
+     Post => Get_Speed (Vec) = Speed;
+
+   type Position_2 is new Vector_2;
+   type Velocity_2 is new Vector_2;
+   type Acceleration_2 is new Vector_2;
+
+   -- TODO: better name
    type Object_2 is abstract new Movable with
       record
          Pos : Position_2;
-         Vel : Velocity_2;
+         Orientation : Float := 0.0;
+         Vel : Velocity_2 := Velocity_2'(0.0, 0.0);
+         Acc : Acceleration_2 := Acceleration_2'(0.0, 0.0);
       end record;
 
    overriding
