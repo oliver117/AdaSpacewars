@@ -29,6 +29,7 @@ package Stardust_Engine is
    procedure Move (dT : Duration); -- Moves all movables in the object list.
 
    -- Concrete
+   -- TODO: Vector_2 tagged?
    type Vector_2 is
       record
          X : Float;
@@ -37,14 +38,14 @@ package Stardust_Engine is
 
    Null_Vector_2 : constant Vector_2 := Vector_2'(0.0, 0.0);
 
-   function Get_Direction (Vec : in Vector_2) return Float;
-   function Get_Speed (Vec : in Vector_2) return Float;
+   function Direction (Vec : in Vector_2) return Float;
+   function Speed (Vec : in Vector_2) return Float;
 
    procedure Set_Direction (Vec : in out Vector_2; Dir : in Float) with
-     Post => Get_Direction (Vec) = Dir;
+     Post => Direction (Vec) = Dir;
 
-   procedure Set_Speed (Vec : in out Vector_2; Speed : in Float) with
-     Post => Get_Speed (Vec) = Speed;
+   procedure Set_Speed (Vec : in out Vector_2; Sp : in Float) with
+     Post => Speed (Vec) = Sp;
 
    type Position_2 is new Vector_2;
    type Velocity_2 is new Vector_2;

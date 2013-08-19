@@ -51,28 +51,24 @@ package body Stardust_Engine is
       Obj.Pos.Y := Obj.Pos.Y + Obj.Vel.Y * Float (dT) + 0.5 * Obj.Acc.X * Float (dT) ** 2;
    end Move;
 
-   function Get_Direction (Vec : in Vector_2) return Float is
-   begin
-      return Elementary_Functions.Arctan (Vec.X, Vec.Y);
-   end Get_Direction;
+   function Direction (Vec : in Vector_2) return Float is
+     (Elementary_Functions.Arctan (Vec.X, Vec.Y));
 
-   function Get_Speed (Vec : in Vector_2) return Float is
-   begin
-      return Elementary_Functions.Sqrt (Vec.X ** 2 + Vec.Y ** 2);
-   end Get_Speed;
+   function Speed (Vec : in Vector_2) return Float is
+     (Elementary_Functions.Sqrt (Vec.X ** 2 + Vec.Y ** 2));
 
    procedure Set_Direction (Vec : in out Vector_2; Dir : in Float) is
-      Speed : constant Float := Get_Speed (Vec);
+      Sp : constant Float := Speed (Vec);
    begin
-      Vec.X := Elementary_Functions.Cos (Dir) * Speed;
-      Vec.Y := Elementary_Functions.Sin (Dir) * Speed;
+      Vec.X := Elementary_Functions.Cos (Dir) * Sp;
+      Vec.Y := Elementary_Functions.Sin (Dir) * Sp;
    end Set_Direction;
 
-   procedure Set_Speed (Vec : in out Vector_2; Speed : in Float) is
-      Dir : constant Float := Get_Direction (Vec);
+   procedure Set_Speed (Vec : in out Vector_2; Sp : in Float) is
+      Dir : constant Float := Direction (Vec);
    begin
-      Vec.X := Elementary_Functions.Cos (Dir) * Speed;
-      Vec.Y := Elementary_Functions.Sin (Dir) * Speed;
+      Vec.X := Elementary_Functions.Cos (Dir) * Sp;
+      Vec.Y := Elementary_Functions.Sin (Dir) * Sp;
    end Set_Speed;
 
    function Initialize (Width : Integer;
