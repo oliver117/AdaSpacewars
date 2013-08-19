@@ -2,7 +2,6 @@ with Ada.Numerics.Float_Random;
 with Ada.Containers.Indefinite_Doubly_Linked_Lists;
 with Interfaces.C; use Interfaces.C;
 
-with Allegro5.Color;
 with Allegro5.Display;
 with Allegro5.Events;
 with Allegro5.Timer;
@@ -103,32 +102,6 @@ package Stardust_Engine is
    -- dT : elapsed time
    procedure Move (Obj : in out Object_X; dT: Duration);
 
-   type Player_Number is (One, Two);
-
-   type Projectile is new Object_X with record
-      C: Color.ALLEGRO_COLOR;
-      Shooter : Player_Number;
-   end record;
-
-   procedure Draw (P : Projectile);
-
-   package Projectile_Doubly_Linked_Lists is new Ada.Containers.Indefinite_Doubly_Linked_Lists (Projectile);
-
-   type Spaceship is new Object_X with
-      record
-         Player : Player_Number;
-         Hits : Integer := 0;
-      end record;
-
-   procedure Draw (Sp : Spaceship);
-
-
-   procedure Draw_Players;
-
-   Procedure Move (PI_1 : Player_Input; PI_2 : Player_Input; dT: Float);
-
-   procedure Render_Projectiles;
-
    function Get_Screen_Width return int;
    function Get_Screen_Height return int;
    function Get_Display return Display.ALLEGRO_DISPLAY;
@@ -148,9 +121,5 @@ private
    Move_Timer : Timer.ALLEGRO_TIMER;
 
    Float_RNG : Ada.Numerics.Float_Random.Generator;
-
-   Players : array (Player_Number) of Spaceship;
-
-   Projectile_Register : Projectile_Doubly_Linked_Lists.List;
 
 end Stardust_Engine;
