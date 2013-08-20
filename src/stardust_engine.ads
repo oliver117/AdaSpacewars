@@ -4,6 +4,7 @@ with Interfaces.C; use Interfaces.C;
 
 with Allegro5.Display;
 with Allegro5.Events;
+with Allegro5.Keycodes;
 with Allegro5.Timer;
 use Allegro5;
 
@@ -11,21 +12,22 @@ package Stardust_Engine is
 
    -- Abstract
    type Object is interface;
-   type Object_Class_Access is access all Object'Class;
+
    type Drawable is interface and Object;
    type Movable is interface and Object;
 
    procedure Draw (D : Drawable) is abstract;
    procedure Move (M : in out Movable; dT : Duration) is abstract;
 
-   package Object_Lists is new
-     Ada.Containers.Indefinite_Doubly_Linked_Lists (Object_Class_Access);
+   package Object_Lists is new Ada.Containers.Indefinite_Doubly_Linked_Lists (Object'Class);
 
    Object_List : Object_Lists.List := Object_Lists.Empty_List;
    -- TODO: make that a tree/multilist?, Z-index?
 
    procedure Draw; -- Draws all drawables in the object list.
-   procedure Move (dT : Duration); -- Moves all movables in the object list.
+
+   -- Moves all movables in the object list.
+   procedure Move (dT : Duration); -- dT : elapsed time
 
    -- Concrete
    -- TODO: Vector_2 tagged?
@@ -77,36 +79,13 @@ package Stardust_Engine is
    procedure Handle_Event (Event : Events.ALLEGRO_EVENT);
 
 
-   type Player_Input is
-      record
-         Turn_Left : Boolean := False;
-         Turn_Right : Boolean := False;
-         Accelerate : Boolean := False;
-         Decelerate : Boolean := False;
-         Fire : Boolean := False;
-      end record;
-
-   type Object_X is abstract tagged
-      record
-         X : Float;
-         Y : Float;
-         Vx : Float;
-         Vy : Float;
-         Rotation : Float; -- TODO: fixed
-      end record;
-
-   procedure Draw (Obj : Object_X) is abstract;
-
-   function Absolute_Velocity (Obj : Object_X) return Float;
-
-   -- dT : elapsed time
-   procedure Move (Obj : in out Object_X; dT: Duration);
-
    function Get_Screen_Width return int;
    function Get_Screen_Height return int;
    function Get_Display return Display.ALLEGRO_DISPLAY;
 
    function Want_Close return Boolean;
+
+   function Key_Pressed (Keycode : in Keycodes.ALLEGRO_KEYCODE) return Boolean;
 
 private
 
@@ -121,5 +100,7 @@ private
    Move_Timer : Timer.ALLEGRO_TIMER;
 
    Float_RNG : Ada.Numerics.Float_Random.Generator;
+
+   Key_Down : array (Keycodes.ALLEGRO_KEYCODE'Range) of Boolean;
 
 end Stardust_Engine;

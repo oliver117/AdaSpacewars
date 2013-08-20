@@ -17,6 +17,28 @@ procedure Spacewars is
 
    type Spaceship is new Sprites.Sprite (Sprites.Center) with null record;
 
+   overriding
+   procedure Move (Sp : in out Spaceship; dT : in Duration) is
+   begin
+      if Key_Pressed (Keycodes.ALLEGRO_KEY_W) then
+         Set_Speed (Sp.Vel, Speed (Sp.Vel) + Float (1.0 * dT));
+      end if;
+
+      if Key_Pressed (Keycodes.ALLEGRO_KEY_S) then
+         Set_Speed (Sp.Vel, Speed (Sp.Vel) - Float (1.0 * dT));
+      end if;
+
+      if Key_Pressed (Keycodes.ALLEGRO_KEY_A) then
+         Sp.Orientation := Sp.Orientation + Float (1.0 * dT);
+         Set_Direction (Sp.Vel, Sp.Orientation);
+      end if;
+
+      if Key_Pressed (Keycodes.ALLEGRO_KEY_D) then
+         Sp.Orientation := Sp.Orientation - Float (1.0 * dT);
+         Set_Direction (Sp.Vel, Sp.Orientation);
+      end if;
+   end Move;
+
    Player_1 : aliased Spaceship;
    Player_2 : aliased Spaceship;
 
@@ -64,8 +86,8 @@ begin
 
    Stars.Draw_On_Bitmap (Star_Background.Bitmap, 2500);
 
-   Object_List.Append (Player_1'Access);
-   Object_List.Append (Player_2'Access);
+   Object_List.Append (Player_1);
+   -- Object_List.Append (Player_2);
 
    Star_Timer;
 

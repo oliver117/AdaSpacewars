@@ -4,7 +4,6 @@ with Ada.Text_IO;
 with Allegro5.Color;
 with Allegro5.Drawing;
 with Allegro5.Keyboard;
-with Allegro5.Keycodes;
 with Allegro5.System;
 
 with Allegro5.Addon.Image;
@@ -34,15 +33,19 @@ package body Stardust_Engine is
    end Draw;
 
    procedure Move (dT : Duration) is
-      procedure Each (Cur : Object_Lists.Cursor) is
-         Obj : Object'Class := Object_Lists.Element (Cur);
+      procedure Each (Obj : in out Object'Class) is
       begin
          if Obj in Movable'Class then
             Movable'Class (Obj).Move(dT);
          end if;
       end Each;
+
+      Cur : Object_Lists.Cursor := Object_List.First;
    begin
-      Object_List.Iterate (Each'Access);
+      while Object_Lists.Has_Element (Cur) loop
+         Object_Lists.Update_Element (Object_List, Cur, Each'Access);
+         Object_Lists.Next (Cur);
+      end loop;
    end Move;
 
    overriding
@@ -156,6 +159,10 @@ package body Stardust_Engine is
       elsif Event.c_type = Events.ALLEGRO_EVENT_KEY_DOWN and then
         Event.keyboard.keycode = Keycodes.ALLEGRO_KEY_ESCAPE then
          Close := True;
+      elsif Event.c_type = Events.ALLEGRO_EVENT_KEY_DOWN then
+         Key_Down (Event.keyboard.keycode) := True;
+      elsif Event.c_type = Events.ALLEGRO_EVENT_KEY_UP then
+         Key_Down (Event.keyboard.keycode) := False;
       elsif Event.c_type = Events.ALLEGRO_EVENT_TIMER then
          Move (1.0 / 60.0);
          Redraw := True;
@@ -167,23 +174,6 @@ package body Stardust_Engine is
       end if;
    end Handle_Event;
 
-
-
-
-
-
-   function Absolute_Velocity (Obj : Object_X) return Float is
-   begin
-      return Elementary_Functions.Sqrt (Obj.Vx ** 2 + Obj.Vy ** 2);
-   end Absolute_Velocity;
-
-   -- dT : elapsed time
-   procedure Move (Obj : in out Object_X; dT : Duration) is
-   begin
-      Obj.X := Obj.X + Obj.Vx * Float (dT);
-      Obj.Y := Obj.Y + Obj.Vy * Float (dT);
-   end Move;
-
    function Get_Screen_Width return int is (Screen_Width);
 
    function Get_Screen_Height return int is (Screen_Height);
@@ -191,5 +181,8 @@ package body Stardust_Engine is
    function Get_Display return Display.ALLEGRO_DISPLAY is (Disp);
 
    function Want_Close return Boolean is (Close);
+
+   function Key_Pressed (Keycode : in Keycodes.ALLEGRO_KEYCODE) return Boolean is
+      (Key_Down (Keycode));
 
 end Stardust_Engine;
