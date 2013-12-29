@@ -1,8 +1,5 @@
-with Ada.Numerics.Elementary_Functions; use Ada.Numerics;
 with Ada.Text_IO;
 
-with Allegro5.Color;
-with Allegro5.Drawing;
 with Allegro5.Keyboard;
 with Allegro5.System;
 
@@ -13,70 +10,10 @@ use Allegro5.Addon;
 
 package body Stardust_Engine is
 
-   procedure Draw is
-      procedure Each (Cur : Object_Lists.Cursor) is
-         Obj : Object'Class := Object_Lists.Element (Cur);
-      begin
-         if Obj in Drawable'Class then
-            Drawable'Class (Obj).Draw;
-         end if;
-      end Each;
-   begin
-      -- TODO: does it make sense to clear the screen to black?
-      Drawing.al_clear_to_color (Color.al_map_rgb (r => 0,
-                                                   g => 0,
-                                                   b => 0));
-
-      Object_List.Iterate (Each'Access);
-
-      Display.al_flip_display;
-   end Draw;
-
-   procedure Move (dT : Duration) is
-      procedure Each (Obj : in out Object'Class) is
-      begin
-         if Obj in Movable'Class then
-            Movable'Class (Obj).Move(dT);
-         end if;
-      end Each;
-
-      Cur : Object_Lists.Cursor := Object_List.First;
-   begin
-      while Object_Lists.Has_Element (Cur) loop
-         Object_Lists.Update_Element (Object_List, Cur, Each'Access);
-         Object_Lists.Next (Cur);
-      end loop;
-   end Move;
-
-   overriding
-   procedure Move (Obj : in out Object_2; dT : Duration) is
-   begin
-      Obj.Pos.X := Obj.Pos.X + Obj.Vel.X * Float (dT) + 0.5 * Obj.Acc.X * Float (dT) ** 2;
-      Obj.Pos.Y := Obj.Pos.Y + Obj.Vel.Y * Float (dT) + 0.5 * Obj.Acc.X * Float (dT) ** 2;
-   end Move;
-
-   function Direction (Vec : in Vector_2) return Float is
-     (Elementary_Functions.Arctan (Vec.X, Vec.Y));
-
-   function Speed (Vec : in Vector_2) return Float is
-     (Elementary_Functions.Sqrt (Vec.X ** 2 + Vec.Y ** 2));
-
-   procedure Set_Direction (Vec : in out Vector_2; Dir : in Float) is
-      Sp : constant Float := Speed (Vec);
-   begin
-      Vec.X := Elementary_Functions.Cos (Dir) * Sp;
-      Vec.Y := Elementary_Functions.Sin (Dir) * Sp;
-   end Set_Direction;
-
-   procedure Set_Speed (Vec : in out Vector_2; Sp : in Float) is
-      Dir : constant Float := Direction (Vec);
-   begin
-      Vec.X := Elementary_Functions.Cos (Dir) * Sp;
-      Vec.Y := Elementary_Functions.Sin (Dir) * Sp;
-   end Set_Speed;
-
    function Initialize (Width : Integer;
-                        Height : Integer) return Boolean is
+                        Height : Integer;
+                        Move_Proc : Move_Procedure;
+                        Render_Proc : Render_Procedure) return Boolean is
       Success : Boolean := True;
    begin
       Ada.Text_IO.Put ("System ... ");
@@ -125,6 +62,9 @@ package body Stardust_Engine is
       Events.al_register_event_source (Event_Queue, Timer.al_get_timer_event_source (Move_Timer));
       Events.al_register_event_source (Event_Queue, Display.al_get_display_event_source (Disp));
 
+      Move := Move_Proc;
+      Render := Render_Proc;
+
       return Success;
 
       <<deinit_system>>
@@ -140,10 +80,10 @@ package body Stardust_Engine is
       System.al_uninstall_system;
    end Cleanup;
 
-   procedure Star_Timer is
+   procedure Start_Timer is
    begin
       Timer.al_start_timer (Move_Timer);
-   end Star_Timer;
+   end Start_Timer;
 
    function Wait_For_Event return Events.ALLEGRO_EVENT is
       Event : aliased Events.ALLEGRO_EVENT;
@@ -169,7 +109,7 @@ package body Stardust_Engine is
       end if;
 
       if Events.al_is_event_queue_empty (Event_Queue) /= 0 and Redraw then
-         Draw;
+         Render.all;
          Redraw := False;
       end if;
    end Handle_Event;
@@ -183,6 +123,6 @@ package body Stardust_Engine is
    function Want_Close return Boolean is (Close);
 
    function Key_Pressed (Keycode : in Keycodes.ALLEGRO_KEYCODE) return Boolean is
-      (Key_Down (Keycode));
+     (Key_Down (Keycode));
 
 end Stardust_Engine;

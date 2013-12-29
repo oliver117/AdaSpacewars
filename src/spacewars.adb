@@ -1,106 +1,72 @@
-with Ada.Numerics;
 with Ada.Text_IO;
-with Interfaces.C;         use Interfaces.C;
-with Interfaces.C.Strings;
 
-with Allegro5.Bitmap;
-with Allegro5.Bitmap_IO;
-with Allegro5.Color;
+with Interfaces.C;
+
 with Allegro5.Events;
-with Allegro5.Keycodes;  use Allegro5;
 
-with Stardust_Engine;         use Stardust_Engine;
-with Stardust_Engine.Sprites;
-with Stardust_Engine.Stars;
+use Allegro5;
+
+with Stardust_Engine;
+with Stardust_Engine.Entities;
+
+
+use Stardust_Engine;
 
 procedure Spacewars is
 
-   type Spaceship is new Sprites.Sprite (Sprites.Center) with null record;
+   use type Interfaces.C.unsigned;
 
-   overriding
-   procedure Move (Sp : in out Spaceship; dT : in Duration) is
+   subtype Spaceship is Stardust_Engine.Entities.Entity;
+
+   Player_1 : Spaceship;
+   Player_2 : Spaceship;
+
+   procedure Move (dT : Float) is
    begin
-      if Key_Pressed (Keycodes.ALLEGRO_KEY_W) then
-         Set_Speed (Sp.Vel, Speed (Sp.Vel) + Float (1.0 * dT));
-      end if;
-
-      if Key_Pressed (Keycodes.ALLEGRO_KEY_S) then
-         Set_Speed (Sp.Vel, Speed (Sp.Vel) - Float (1.0 * dT));
-      end if;
-
-      if Key_Pressed (Keycodes.ALLEGRO_KEY_A) then
-         Sp.Orientation := Sp.Orientation + Float (1.0 * dT);
-         Set_Direction (Sp.Vel, Sp.Orientation);
-      end if;
-
-      if Key_Pressed (Keycodes.ALLEGRO_KEY_D) then
-         Sp.Orientation := Sp.Orientation - Float (1.0 * dT);
-         Set_Direction (Sp.Vel, Sp.Orientation);
-      end if;
+      return;
    end Move;
 
-   Player_1 : aliased Spaceship;
-   Player_2 : aliased Spaceship;
-
-   Star_Background : Sprites.Sprite (Sprites.Top_Left);
+   procedure Render is
+   begin
+      Entities.Render (Player_1);
+      Entities.Render (Player_2);
+   end Render;
 begin
    Ada.Text_IO.Put_Line ("Starting SpaceWars...");
 
-   if not Initialize (800, 600) then
+   if not Initialize (800, 600, Move'Unrestricted_Access, Render'Unrestricted_Access) then
       return;
    end if;
 
-   Player_1 :=
-     Spaceship'
-     (Pos         => Position_2'(0.0, 0.0),
-      Orientation => 0.0,
-      Pos_Mode    => Sprites.Center,
-      Bitmap      => Bitmap_IO.al_load_bitmap
-                       (Interfaces.C.Strings.New_String ("../flyer1.png")),
-      Tint        => Color.al_map_rgb_f (r => 1.0, g => 0.5, b => 0.5),
-      Scale_X     => 0.05,
-      Scale_Y     => 0.05,
-      others => <>);
-   Player_2 :=
-     Spaceship'
-     (Pos         => Position_2'(0.0, 0.0),
-      Orientation => 0.0,
-      Pos_Mode    => Sprites.Center,
-      Bitmap      => Bitmap_IO.al_load_bitmap
-                       (Interfaces.C.Strings.New_String ("../flyer2.png")),
-      Tint        => Color.al_map_rgb_f (r => 0.5, g => 0.5, b => 1.0),
-      Scale_X     => 0.05,
-      Scale_Y     => 0.05,
-      others => <>);
+   declare
+      DB_P1, DB_P2 : Entities.Display_Bitmap;
+      Pos_1, Pos_2 : Entities.Position_2D;
 
-   Star_Background :=
-     Sprites.Sprite'
-     (Pos         => Position_2'(0.0, 0.0),
-      Orientation => 0.0,
-      Pos_Mode    => Sprites.Top_Left,
-      Bitmap      => Allegro5.Bitmap.al_create_bitmap
-                       (w => Get_Screen_Width,
-                        h => Get_Screen_Height),
-      Tint        => Color.al_map_rgb_f (r => 1.0, g => 1.0, b => 1.0),
-      others => <>);
+   begin
+      DB_P1.Load_Bitmap ("../flyer1.png");
+      DB_P2.Load_Bitmap ("../flyer2.png");
 
-   Stars.Draw_On_Bitmap (Star_Background.Bitmap, 2500);
+      Pos_1 := Entities.Position_2D'(Position     => (100.0, 100.0),
+                                     Velocity     => (0.0, 0.0),
+                                     Acceleration => (0.0, 0.0));
+      Pos_2 := Entities.Position_2D'(Position     => (200.0, 200.0),
+                                     Velocity     => (0.0, 0.0),
+                                     Acceleration => (0.0, 0.0));
 
-   Object_List.Append (Player_1);
-   -- Object_List.Append (Player_2);
+      Entities.Add_Component (Player_1, DB_P1);
+      Entities.Add_Component (Player_2, DB_P2);
 
-   Star_Timer;
+      Entities.Add_Component (Player_1, Pos_1);
+      Entities.Add_Component (Player_2, Pos_2);
+   end;
+
+   Start_Timer;
 
    declare
       Event : Events.ALLEGRO_EVENT;
    begin
       Main_Loop : loop
          Event := Wait_For_Event;
-         if Event.c_type = Events.ALLEGRO_EVENT_KEY_DOWN then
-            if Event.keyboard.keycode = Keycodes.ALLEGRO_KEY_RIGHT then
-               Player_1.Orientation := Player_1.Orientation + 0.01 * Ada.Numerics.Pi;
-            end if;
-         end if;
 
          Handle_Event (Event);
 
