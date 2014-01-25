@@ -2,26 +2,32 @@ with "../AdaAllegro5/adaallegro5.gpr";
 
 project AdaSpacewars is
 
-   for Source_Dirs use ("src");
-   for Main use ("spacewars.adb");
+   for Source_Dirs use ("src", "test/**");
+   for Main use ("spacewars.adb", "tester.adb");
    for Object_Dir use "obj";
 
    package Builder is
-      for Default_Switches ("ada") use ("-m");
+      for Default_Switches ("ada") use ("-s");
    end Builder;
 
    package Compiler is
-      for Default_Switches ("ada") use ("-gnatwa", "-fdata-sections", "-ffunction-sections", "-gnato", "-fstack-check", "-gnatE", "-g", "-gnat12");
+      for Default_Switches ("ada") use ("-gnatwa", "-gnato", "-fstack-check", "-gnatE", "-mcmodel=large", "-gnat12", "-ffunction-sections", "-fdata-sections", "-gnata", "-O2");
    end Compiler;
 
    package Binder is
-      for Default_Switches ("ada") use ("-E");
    end Binder;
 
    package Linker is
-      for Default_Switches ("ada") use ("-g", "-Wl,--gc-sections");
-      for Linker_Options use ("-lallegro", "-lallegro_font", "-lallegro_image", "-lallegro_primitives", "-lallegro_ttf");
+      for Linker_Options use ("-lallegro", "-lallegro_image", "-lallegro_primitives");
+      for Default_Switches ("ada") use ("-Wl,--gc-sections", "-s");
    end Linker;
+
+   package Ide is
+      for Gnat use "/usr/gnat/bin/gnat";
+      for Gnatlist use "/usr/gnat/bin/gnatls";
+      for Debugger_Command use "/usr/gnat/bin/gdb";
+      for Compiler_Command ("ada") use "/usr/gnat/bin/gnatmake";
+   end Ide;
 
 end AdaSpacewars;
 

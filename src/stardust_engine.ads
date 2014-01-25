@@ -36,6 +36,8 @@ package Stardust_Engine is
 
    function Key_Pressed (Keycode : in Keycodes.ALLEGRO_KEYCODE) return Boolean;
 
+   Wrap_Around : Boolean := True;
+
 private
 
    Move : access procedure (dT : Float);

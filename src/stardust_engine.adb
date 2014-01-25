@@ -110,6 +110,7 @@ package body Stardust_Engine is
 
       if Events.al_is_event_queue_empty (Event_Queue) /= 0 and Redraw then
          Render.all;
+         Display.al_flip_display;
          Redraw := False;
       end if;
    end Handle_Event;
