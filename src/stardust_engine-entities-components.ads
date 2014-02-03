@@ -1,5 +1,5 @@
 generic
-   type Component_Type is new Component with private;
+   type Component_Type (<>) is new Component with private;
 package Stardust_Engine.Entities.Components is
    type Cursor is private;
 

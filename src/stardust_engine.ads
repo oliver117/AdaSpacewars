@@ -38,6 +38,8 @@ package Stardust_Engine is
 
    Wrap_Around : Boolean := True;
 
+   Engine_Error : exception;
+
 private
 
    Move : access procedure (dT : Float);

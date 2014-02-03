@@ -1,5 +1,3 @@
-with Ada.Text_IO;
-
 with Allegro5.Bitmap_Draw;
 with Allegro5.Bitmap_IO;
 with Allegro5.Drawing;
@@ -11,10 +9,9 @@ with Interfaces.C.Strings;
 
 with Stardust_Engine.Entities.Components;
 
-
-
 package body Stardust_Engine.Entities is
 
+   package Get_Display is new Components (Component_Type => Display'Class);
    package Get_Position_2D is new Components (Component_Type => Position_2D);
    package Get_Rotation is new Components (Component_Type => Rotation);
 
@@ -69,8 +66,12 @@ package body Stardust_Engine.Entities is
    ------------
 
    procedure Render (E : in Entity) is
+      procedure Call_Render (C : Get_Display.Cursor) is
+      begin
+         Get_Display.Component (C).Render(E);
+      end Call_Render;
    begin
-      null;
+      Get_Display.Iterate (E, Call_Render'Access);
    end Render;
 
    ----------
@@ -136,8 +137,13 @@ package body Stardust_Engine.Entities is
    -----------------
 
    procedure Load_Bitmap (B : in out Bitmap'Class; Filename : in String) is
+      use type Allegro5.Bitmap.ALLEGRO_BITMAP;
    begin
       B.Bitmap := Bitmap_IO.al_load_bitmap (Interfaces.C.Strings.New_String (Filename));
+
+      if B.Bitmap = Allegro5.Bitmap.No_Bitmap then
+         raise Engine_Error with "Failed to load bitmap!";
+      end if;
    end Load_Bitmap;
 
    ------------
@@ -165,37 +171,27 @@ package body Stardust_Engine.Entities is
    end Render;
 
    procedure Render (B : in Tinted_Scaled_Rotated_Bitmap; E : in Entity) is
---        P : constant Component'Class := Get_Component (E, Position_2D'Tag);
---        A : constant Component'Class := Get_Component (E, Rotation'Tag);
---     begin
---        if P'Tag in Position_2D'Tag and A'Tag in Rotation'Tag then
---           declare
---              P_2D : constant Position_2D := Position_2D (P);
---              Rot : constant Rotation := Rotation (A);
---
---              cX : constant Float := Float (Allegro5.Bitmap.al_get_bitmap_width (B.Bitmap)) / 2.0;
---              cY : constant Float := Float (Allegro5.Bitmap.al_get_bitmap_height (B.Bitmap)) / 2.0;
---              dX : constant Float := P_2D.Position.X - cX * B.Scale.X;
---              dY : constant Float := P_2D.Position.Y - cY * B.Scale.Y;
---           begin
---              Ada.Text_IO.Put_Line ("dx: " & Float'Image (dx));
---              Drawing.al_draw_pixel (x     => dX,
---                                     y     => dY,
---                                     color => Color.al_map_rgb (255, 255, 255));
---              Bitmap_Draw.al_draw_tinted_scaled_rotated_bitmap (bitmap => B.Bitmap,
---                                                                tint   => B.Tint,
---                                                                cx     => cX,
---                                                                cy     => cY,
---                                                                dx     => dX,
---                                                                dy     => dY,
---                                                                xscale => B.Scale.X,
---                                                                yscale => B.Scale.Y,
---                                                                angle  => Rot.Angle,
---                                                                flags  => 0);
---           end;
---        end if;
+      P : constant Position_2D := Get_Position_2D.First_Component (E);
+      R : constant Rotation := Get_Rotation.First_Component (E);
+
+      cX : constant Float := Float (Allegro5.Bitmap.al_get_bitmap_width (B.Bitmap)) / 2.0;
+      cY : constant Float := Float (Allegro5.Bitmap.al_get_bitmap_height (B.Bitmap)) / 2.0;
+      dX : constant Float := P.Position.X - cX * B.Scale.X;
+      dY : constant Float := P.Position.Y - cY * B.Scale.Y;
    begin
-      null;
+      Drawing.al_draw_pixel (x     => dX,
+                             y     => dY,
+                             color => Color.al_map_rgb (255, 255, 255));
+      Bitmap_Draw.al_draw_tinted_scaled_rotated_bitmap (bitmap => B.Bitmap,
+                                                        tint   => B.Tint,
+                                                        cx     => cX,
+                                                        cy     => cY,
+                                                        dx     => dX,
+                                                        dy     => dY,
+                                                        xscale => B.Scale.X,
+                                                        yscale => B.Scale.Y,
+                                                        angle  => R.Angle,
+                                                        flags  => 0);
    end render;
 
    -------------
@@ -204,59 +200,45 @@ package body Stardust_Engine.Entities is
 
    overriding
    procedure Process (C : in Acceleration_Control; E : in out Entity) is
---        use Ada.Numerics;
---        use Ada.Numerics.Elementary_Functions;
---
---        P : constant Component_Lists.Reference_Type := Get_Component_Reference (E, Position_2D'Tag);
---        A : constant Component'Class := Get_Component (E, Rotation'Tag);
+      use Ada.Numerics;
+      use Ada.Numerics.Elementary_Functions;
+
+      C_P : constant Get_Position_2D.Cursor := Get_Position_2D.First (E);
+      Pos : Position_2D := Get_Position_2D.Component (C_P);
+      Rot : constant Rotation := Get_Rotation.First_Component (E);
    begin
---        if P.Element'Tag in Position_2D'Tag and then A'Tag in Rotation'Tag then
---           declare
---              P_2D : Position_2D := Position_2D (P.Element.all);
---              Rot : constant Rotation := Rotation (A);
---           begin
---              if Key_Pressed (C.Accelerate) and Key_Pressed (C.Decelerate) then
---                 null; -- both keys pressed, do nothing
---              elsif Key_Pressed (C.Accelerate) then
---                 P_2D.Acceleration.X := C.Rate * Cos (Rot.Angle - Pi / 2.0);
---                 P_2D.Acceleration.Y := C.Rate * Sin (Rot.Angle - Pi / 2.0);
---              elsif Key_Pressed (C.Decelerate) then
---                 P_2D.Acceleration.X := -C.Rate * Cos (Rot.Angle - Pi / 2.0);
---                 P_2D.Acceleration.Y := -C.Rate * Sin (Rot.Angle - Pi / 2.0);
---              else
---                 -- no key press, set acceleration to zero
---                 P_2D.Acceleration.X := 0.0;
---                 P_2D.Acceleration.Y := 0.0;
---              end if;
---
---              P.Element.all := Component'Class (P_2D);
---           end;
---        end if;
-null;
+      if Key_Pressed (C.Accelerate) and Key_Pressed (C.Decelerate) then
+         null; -- both keys pressed, do nothing
+      elsif Key_Pressed (C.Accelerate) then
+         Pos.Acceleration.X := C.Rate * Cos (Rot.Angle - Pi / 2.0);
+         Pos.Acceleration.Y := C.Rate * Sin (Rot.Angle - Pi / 2.0);
+      elsif Key_Pressed (C.Decelerate) then
+         Pos.Acceleration.X := -C.Rate * Cos (Rot.Angle - Pi / 2.0);
+         Pos.Acceleration.Y := -C.Rate * Sin (Rot.Angle - Pi / 2.0);
+      else
+         -- no key press, set acceleration to zero
+         Pos.Acceleration.X := 0.0;
+         Pos.Acceleration.Y := 0.0;
+      end if;
+
+      Get_Position_2D.Replace_Component (E, C_P, Pos);
    end Process;
 
    overriding
    procedure Process (C : in Turn_Control; E : in out Entity) is
---        A : constant Component_Lists.Reference_Type := Get_Component_Reference (E, Rotation'Tag);
---     begin
---       if A.Element'Tag in Rotation'Tag then
---           declare
---              Rot : Rotation := Rotation (A.Element.all);
---           begin
---              if Key_Pressed (C.Turn_Left) and Key_Pressed (C.Turn_Right) then
---                 null; -- both keys pressed
---              elsif Key_Pressed (C.Turn_Left) then
---                 Rot.Angular_Velocity := -C.Rate;
---              elsif Key_Pressed (C.Turn_Right) then
---                 Rot.Angular_Velocity := C.Rate;
---              else
---                 Rot.Angular_Velocity := 0.0;
---              end if;
---
---              A.Element.all := Component'Class (Rot);
---           end;
---        end if;
-begin null;
-   end Process;
+      C_R : constant Get_Rotation.Cursor := Get_Rotation.First (E);
+      Rot : Rotation := Get_Rotation.Component (C_R);
+   begin
+      if Key_Pressed (C.Turn_Left) and Key_Pressed (C.Turn_Right) then
+         null; -- both keys pressed
+      elsif Key_Pressed (C.Turn_Left) then
+         Rot.Angular_Velocity := -C.Rate;
+      elsif Key_Pressed (C.Turn_Right) then
+         Rot.Angular_Velocity := C.Rate;
+      else
+         Rot.Angular_Velocity := 0.0;
+      end if;
 
+      Get_Rotation.Replace_Component (E, C_R, Rot);
+   end Process;
 end Stardust_Engine.Entities;

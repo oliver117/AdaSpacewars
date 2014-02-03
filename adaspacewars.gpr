@@ -11,22 +11,20 @@ project AdaSpacewars is
    end Builder;
 
    package Compiler is
-      for Default_Switches ("ada") use ("-gnatwa", "-gnato", "-fstack-check", "-gnatE", "-mcmodel=large", "-gnat12", "-ffunction-sections", "-fdata-sections", "-gnata", "-O2");
+      for Default_Switches ("ada") use ("-gnatwa", "-gnat12", "-O2", "-gnatVn", "-gnatE", "-fstack-check", "-gnato", "-g", "-gnata");
    end Compiler;
 
    package Binder is
+      for Default_Switches ("ada") use ("-E");
    end Binder;
 
    package Linker is
       for Linker_Options use ("-lallegro", "-lallegro_image", "-lallegro_primitives");
-      for Default_Switches ("ada") use ("-Wl,--gc-sections", "-s");
+      for Default_Switches ("ada") use ("-g");
    end Linker;
 
    package Ide is
       for Gnat use "/usr/gnat/bin/gnat";
-      for Gnatlist use "/usr/gnat/bin/gnatls";
-      for Debugger_Command use "/usr/gnat/bin/gdb";
-      for Compiler_Command ("ada") use "/usr/gnat/bin/gnatmake";
    end Ide;
 
 end AdaSpacewars;
